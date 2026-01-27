@@ -1,0 +1,97 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f4f4f4;
+}
+
+header {
+  background: #4b1c6b;
+  color: white;
+  text-align: center;
+  padding: 20px;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.container {
+  padding: 15px;
+}
+
+.produto {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.produto h2 {
+  margin: 0 0 5px;
+}
+
+.preco {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.qtd-control {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.qtd-control button {
+  width: 50px;
+  height: 50px;
+  font-size: 26px;
+  border: none;
+  border-radius: 10px;
+  background: #4b1c6b;
+  color: white;
+}
+
+.qtd-control span {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.acai-item {
+  background: #f0f0f0;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.acai-item label {
+  display: block;
+  margin: 5px 0;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  margin-bottom: 15px;
+}
+
+.finalizar {
+  background: #25D366;
+  color: white;
+  border: none;
+  width: 100%;
+  padding: 18px;
+  font-size: 18px;
+  border-radius: 12px;
+}
+
+footer {
+  background: white;
+  padding: 15px;
+  margin-top: 30px;
+  font-size: 14px;
+}

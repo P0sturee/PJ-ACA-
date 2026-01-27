@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PJ AÇAÍ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>PJ AÇAÍ</header>
+
+<main class="container">
+
+  <!-- AÇAÍ BATIDO 300 -->
+  <section class="produto">
+    <h2>Açaí Batido 300ml</h2>
+    <p class="preco">R$ 18,00</p>
+
+    <div class="qtd-control">
+      <button onclick="alterarQtd('300', -1)">−</button>
+      <span id="qtd-300">0</span>
+      <button onclick="alterarQtd('300', 1)">+</button>
+    </div>
+
+    <div id="itens-300"></div>
+  </section>
+
+  <!-- AÇAÍ BATIDO 500 -->
+  <section class="produto">
+    <h2>Açaí Batido 500ml</h2>
+    <p class="preco">R$ 22,00</p>
+
+    <div class="qtd-control">
+      <button onclick="alterarQtd('500', -1)">−</button>
+      <span id="qtd-500">0</span>
+      <button onclick="alterarQtd('500', 1)">+</button>
+    </div>
+
+    <div id="itens-500"></div>
+  </section>
+
+  <!-- POTE 500 -->
+  <section class="produto">
+    <h2>Pote de Açaí 500ml</h2>
+    <p class="preco">R$ 25,00</p>
+
+    <div class="qtd-control">
+      <button onclick="alterarQtd('pote', -1)">−</button>
+      <span id="qtd-pote">0</span>
+      <button onclick="alterarQtd('pote', 1)">+</button>
+    </div>
+
+    <div id="itens-pote"></div>
+  </section>
+
+  <h3>Endereço de entrega</h3>
+  <input id="endereco" placeholder="Rua, número, bairro">
+
+  <h3>Forma de pagamento</h3>
+  <select id="pagamento">
+    <option>Pix</option>
+  </select>
+
+  <button class="finalizar" onclick="finalizarPedido()">Finalizar Pedido</button>
+
+</main>
+
+<footer>
+  <h4>Perguntas Frequentes</h4>
+
+  <p><strong>Como é feito o açaí?</strong><br>
+  Nosso açaí é batido na hora, bem cremoso e gelado.</p>
+
+  <p><strong>O frete está incluso?</strong><br>
+  Não. O valor do frete será informado no WhatsApp.</p>
+
+  <p><strong>Forma de pagamento?</strong><br>
+  Apenas Pix.</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
