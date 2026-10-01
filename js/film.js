@@ -94,13 +94,22 @@
       if (v && this.ctx.state === 'suspended') this.ctx.resume();
     },
     pad(playing) {
+      this.playing = playing;
       if (!this.ctx) return;
       const t = this.ctx.currentTime;
+      const level = this.ducked ? 0.025 : 0.07;
       this.padGain.gain.cancelScheduledValues(t);
-      this.padGain.gain.setTargetAtTime(this.on && playing ? 0.07 : 0, t, 0.6);
+      this.padGain.gain.setTargetAtTime(this.on && playing ? level : 0, t, this.ducked ? 0.15 : 0.6);
+    },
+    // abaixa a trilha enquanto o narrador fala
+    duck(v) {
+      if (this.ducked === v) return;
+      this.ducked = v;
+      this.pad(this.playing);
     },
     hit(power = 1) {
       if (!this.on || !this.ctx) return;
+      if (this.ducked) power *= 0.55;
       const ctx = this.ctx, t = ctx.currentTime;
       const o = ctx.createOscillator();
       const g = ctx.createGain();
@@ -175,6 +184,109 @@
         o.start(t);
         o.stop(t + 4.3);
       });
+    },
+  };
+
+  /* ==========================================================================
+     Narração (ElevenLabs, voz "Lucas"): um clipe por cena, tocado em
+     sincronia com a linha do tempo — inclusive ao arrastar, pausar ou pular
+  ========================================================================== */
+  const Voice = {
+    cues: [],
+    cur: null,
+    node: null,
+    done: null,
+    loading: null,
+    setup(list) {
+      // nenhuma fala começa antes da anterior terminar
+      let end = 0;
+      this.cues = list.map((c) => {
+        const start = Math.max(c.t, end + 0.12);
+        end = start + c.d;
+        return { url: c.src, d: c.d, start, buf: null, el: null };
+      });
+    },
+    load() {
+      if (this.loading || !Sound.ctx) return this.loading || Promise.resolve();
+      const ctx = Sound.ctx;
+      this.gain = ctx.createGain();
+      this.gain.connect(Sound.master);
+      this.loading = Promise.all(
+        this.cues.map((c) =>
+          fetch(c.url)
+            .then((r) => {
+              if (!r.ok) throw new Error(r.status);
+              return r.arrayBuffer();
+            })
+            .then((b) => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej)))
+            .then((buf) => (c.buf = buf))
+            // sem fetch (ex.: abrindo o arquivo direto do disco): usa <audio>
+            .catch(() => {
+              c.el = new Audio(c.url);
+              c.el.preload = 'auto';
+            })
+        )
+      );
+      return this.loading;
+    },
+    position() {
+      const c = this.cur;
+      if (!c) return 0;
+      return c.el ? c.el.currentTime : Sound.ctx.currentTime - this.t0;
+    },
+    stop() {
+      if (this.node) {
+        this.node.onended = null;
+        try {
+          this.node.stop();
+        } catch (e) {}
+        this.node.disconnect();
+        this.node = null;
+      }
+      if (this.cur && this.cur.el) this.cur.el.pause();
+      this.cur = null;
+      Sound.duck(false);
+    },
+    finished(cue) {
+      if (this.cur !== cue) return;
+      this.node = null;
+      this.cur = null;
+      this.done = cue;
+      Sound.duck(false);
+    },
+    sync(t, active) {
+      if (!active || !Sound.on || !Sound.ctx) {
+        if (this.cur) this.stop();
+        return;
+      }
+      const cue = this.cues.find((c) => (c.buf || c.el) && t >= c.start && t < c.start + c.d);
+      if (!cue || cue === this.done) {
+        if (this.cur && this.cur !== cue) this.stop();
+        return;
+      }
+      const off = t - cue.start;
+      if (this.cur === cue && Math.abs(this.position() - off) < 0.3) return;
+      this.stop();
+      this.cur = cue;
+      Sound.duck(true);
+      if (cue.buf) {
+        const src = Sound.ctx.createBufferSource();
+        src.buffer = cue.buf;
+        src.connect(this.gain);
+        src.onended = () => this.finished(cue);
+        src.start(0, off);
+        this.node = src;
+        this.t0 = Sound.ctx.currentTime - off;
+      } else {
+        cue.el.currentTime = off;
+        cue.el.onended = () => this.finished(cue);
+        const p = cue.el.play();
+        if (p && p.catch) p.catch(() => {});
+      }
+    },
+    // depois de pular na linha do tempo, uma fala já ouvida pode tocar de novo
+    reset() {
+      this.done = null;
     },
   };
 
@@ -467,7 +579,7 @@
       { t: 11, name: 'A obra' },
       { t: 18.2, name: 'A cidade' },
       { t: 24.2, name: 'Os números' },
-      { t: 30.2, name: 'A marca' },
+      { t: 31.4, name: 'A marca' },
     ];
 
     // --- Cena 1 ---
@@ -574,8 +686,13 @@
     textIn(cap4, 18.8);
     textOut(cap4, 23.2);
 
-    // --- Cena 5: números ---
-    const numIn = (n, at, to, dec, suffix, prefixFn) => {
+    // --- Cena 5: números (espaçados para caber a narração) ---
+    const N1 = 24.3;
+    const GAP = 2.6;
+    const N2 = N1 + GAP;
+    const N3 = N2 + GAP;
+    const B = N3 + 1.6; // entrada da marca
+    const numIn = (n, at, to, dec, suffix) => {
       tl.set(n, { visibility: 'visible' }, at);
       tl.fromTo(n._num, { yPercent: 110, scale: 1.3 }, { yPercent: 0, scale: 1, duration: 0.6, ease: 'expo.out' }, at);
       tl.fromTo(n._sub, { yPercent: 110 }, { yPercent: 0, duration: 0.6, ease: 'expo.out' }, at + 0.15);
@@ -588,31 +705,43 @@
         },
       }, at);
       tl.call(fx(() => Sound.hit(0.9)), null, at + 0.05);
-      tl.to([n._num, n._sub], { yPercent: -110, duration: 0.4, ease: 'expo.in' }, at + 1.6);
-      tl.set(n, { visibility: 'hidden' }, at + 2.05);
+      tl.to([n._num, n._sub], { yPercent: -110, duration: 0.4, ease: 'expo.in' }, at + GAP - 0.6);
+      tl.set(n, { visibility: 'hidden' }, at + GAP - 0.15);
     };
     tl.to(wipe, { scaleX: 1, duration: 0.55, ease: 'expo.inOut' }, 23.8);
     tl.call(fx(() => Sound.whoosh()), null, 23.8);
     tl.set(s3, { opacity: 0 }, 24.4);
-    numIn(n1, 24.3, 320, 0, '+');
-    tl.call(fx(() => Sound.whoosh()), null, 25.9);
-    tl.to(wipe2, { scaleX: 1, duration: 0.5, ease: 'expo.inOut' }, 25.9);
-    numIn(n2, 26.3, 1.8, 1, ' mi');
-    tl.call(fx(() => Sound.whoosh()), null, 27.9);
-    tl.to(wipe2, { scaleX: 0, duration: 0.5, ease: 'expo.inOut' }, 27.9);
-    numIn(n3, 28.3, 26, 0, '');
+    numIn(n1, N1, 320, 0, '+');
+    tl.call(fx(() => Sound.whoosh()), null, N2 - 0.4);
+    tl.to(wipe2, { scaleX: 1, duration: 0.5, ease: 'expo.inOut' }, N2 - 0.4);
+    numIn(n2, N2, 1.8, 1, ' mi');
+    tl.call(fx(() => Sound.whoosh()), null, N3 - 0.4);
+    tl.to(wipe2, { scaleX: 0, duration: 0.5, ease: 'expo.inOut' }, N3 - 0.4);
+    numIn(n3, N3, 26, 0, '');
 
     // --- Cena 6: marca ---
-    tl.to(wipe2, { scaleX: 1, duration: 0.5, ease: 'expo.inOut' }, 29.9);
-    tl.set(s6, { opacity: 1 }, 30.4);
-    tl.call(fx(() => { Sound.hit(1.2); Sound.chord(); }), null, 30.5);
-    tl.fromTo(logoV, { drawSVG: '0%', attr: { 'fill-opacity': 0 } }, { drawSVG: '100%', duration: 1.2, ease: 'power2.inOut' }, 30.5);
-    tl.to(logoV, { attr: { 'fill-opacity': 1 }, duration: 0.6 }, 31.5);
-    tl.fromTo(logoSq, { scale: 0, svgOrigin: '33 4' }, { scale: 1, svgOrigin: '33 4', duration: 0.6, ease: 'back.out(3)' }, 31.6);
-    tl.fromTo(logoLine, { drawSVG: '50% 50%' }, { drawSVG: '0% 100%', duration: 0.9, ease: 'expo.inOut' }, 31.6);
-    textIn(brand, 31.7);
-    textIn(tagline, 32.2);
-    tl.to({}, { duration: 2.4 }, 32.6);
+    tl.to(wipe2, { scaleX: 1, duration: 0.5, ease: 'expo.inOut' }, B);
+    tl.set(s6, { opacity: 1 }, B + 0.5);
+    tl.call(fx(() => { Sound.hit(1.2); Sound.chord(); }), null, B + 0.6);
+    tl.fromTo(logoV, { drawSVG: '0%', attr: { 'fill-opacity': 0 } }, { drawSVG: '100%', duration: 1.2, ease: 'power2.inOut' }, B + 0.6);
+    tl.to(logoV, { attr: { 'fill-opacity': 1 }, duration: 0.6 }, B + 1.6);
+    tl.fromTo(logoSq, { scale: 0, svgOrigin: '33 4' }, { scale: 1, svgOrigin: '33 4', duration: 0.6, ease: 'back.out(3)' }, B + 1.7);
+    tl.fromTo(logoLine, { drawSVG: '50% 50%' }, { drawSVG: '0% 100%', duration: 0.9, ease: 'expo.inOut' }, B + 1.7);
+    textIn(brand, B + 1.8);
+    textIn(tagline, B + 2.3);
+    tl.to({}, { duration: 2.4 }, B + 2.7);
+
+    // falas do narrador: início desejado (s) e duração do clipe (s)
+    Voice.setup([
+      { t: 0.9, d: 1.85, src: 'assets/audio/vo-01.mp3' },
+      { t: 5.8, d: 5.12, src: 'assets/audio/vo-02.mp3' },
+      { t: 11.6, d: 5.22, src: 'assets/audio/vo-03.mp3' },
+      { t: 18.9, d: 2.27, src: 'assets/audio/vo-04.mp3' },
+      { t: N1 + 0.1, d: 2.06, src: 'assets/audio/vo-05.mp3' },
+      { t: N2 + 0.1, d: 2.48, src: 'assets/audio/vo-06.mp3' },
+      { t: N3 + 0.1, d: 2.14, src: 'assets/audio/vo-07.mp3' },
+      { t: B + 1.0, d: 2.48, src: 'assets/audio/vo-08.mp3' },
+    ]);
 
     const DURATION = tl.duration();
 
@@ -623,6 +752,7 @@
     const bigBtn = player.querySelector('.player__big');
     const bigLabel = bigBtn.querySelector('span');
     const soundBtn = player.querySelector('[data-act="sound"]');
+    const voiceBtn = player.querySelector('.player__voice');
     const restartBtn = player.querySelector('[data-act="restart"]');
     const fsBtn = player.querySelector('[data-act="fs"]');
     const track = player.querySelector('.player__track');
@@ -663,6 +793,7 @@
         if (playing && !scrubbing) gsap.to(chapterEl, { duration: 0.6, scrambleText: { text: label, chars: 'upperCase', speed: 0.6 } });
         else chapterEl.textContent = label;
       }
+      Voice.sync(t, playing && !scrubbing);
     }
 
     tl.eventCallback('onUpdate', updateUI);
@@ -677,9 +808,11 @@
       player.classList.toggle('is-playing', v);
       playBtn.setAttribute('aria-label', v ? 'Pausar' : 'Reproduzir');
       Sound.pad(v);
+      if (!v) Voice.stop();
     }
 
     function play() {
+      if (tl.progress() >= 1) Voice.reset();
       if (tl.progress() >= 1) tl.restart();
       else tl.play();
       player.classList.add('has-started');
@@ -710,16 +843,30 @@
     screen.addEventListener('click', toggle);
     restartBtn.addEventListener('click', () => {
       userPaused = false;
+      Voice.reset();
       tl.restart();
       player.classList.add('has-started');
       setPlaying(true);
     });
 
-    soundBtn.addEventListener('click', () => {
-      const on = soundBtn.getAttribute('aria-pressed') !== 'true';
+    function setSound(on) {
       soundBtn.setAttribute('aria-pressed', String(on));
+      player.classList.toggle('has-sound', on);
       Sound.setOn(on);
       Sound.pad(playing);
+      if (on) Voice.load().then(updateUI);
+      else Voice.stop();
+    }
+    soundBtn.addEventListener('click', () => setSound(soundBtn.getAttribute('aria-pressed') !== 'true'));
+    // "Assistir com narração": liga o som e recomeça do início para ouvir tudo
+    voiceBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setSound(true);
+      userPaused = false;
+      Voice.reset();
+      tl.restart();
+      player.classList.add('has-started');
+      setPlaying(true);
     });
 
     fsBtn.addEventListener('click', () => {
@@ -740,6 +887,7 @@
     const seekFromEvent = (e) => {
       const rct = track.getBoundingClientRect();
       const p = Math.min(1, Math.max(0, (e.clientX - rct.left) / rct.width));
+      Voice.reset();
       tl.progress(p);
       updateUI();
     };
@@ -770,6 +918,7 @@
         toggle();
       } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
         e.preventDefault();
+        Voice.reset();
         tl.time(Math.min(DURATION, Math.max(0, tl.time() + (e.key === 'ArrowRight' ? 5 : -5))));
         updateUI();
       }

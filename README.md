@@ -7,7 +7,8 @@ Site institucional animado para construtora, feito com **GSAP** (ScrollTrigger, 
 ## O que tem de diferente
 
 - **Obra em 360°**: ao rolar a página, um edifício 3D gira uma volta completa enquanto é construído. São seis fases: fundação, estrutura, fechamento, coroamento, paisagismo e entrega. O guindaste sobe junto com a obra e é desmontado no fim. Na entrega, a cena vira fim de tarde e as janelas acendem. Dá para arrastar a obra para girá-la.
-- **Filme em motion design** ("Do traço ao skyline"): um curta de 35 segundos renderizado ao vivo em SVG + GSAP, sem nenhum arquivo de vídeo. Tem player próprio (play/pause, linha do tempo arrastável com capítulos e tela cheia) e trilha sonora opcional, sintetizada com Web Audio. Começa sozinho quando aparece na tela.
+- **Filme em motion design** ("Do traço ao skyline"): um curta de 36 segundos renderizado ao vivo em SVG + GSAP, sem nenhum arquivo de vídeo. Tem player próprio (play/pause, linha do tempo arrastável com capítulos e tela cheia) e começa sozinho quando aparece na tela.
+- **Narração com voz do ElevenLabs**: ao ativar o som, um narrador (voz "Lucas", português do Brasil) fala uma frase por cena, sincronizada com a linha do tempo, mesmo ao pausar ou arrastar. A trilha sonora é sintetizada com Web Audio e abaixa sozinha enquanto a voz fala.
 - Parallax em camadas no hero (com rolagem e com o mouse), preloader, cursor personalizado e botões magnéticos.
 - Serviços em rolagem horizontal, projetos com revelação e parallax interno, linha do tempo do método e faixas de texto que aceleram com a velocidade da rolagem.
 - Formulário de orçamento que abre o WhatsApp com a mensagem pronta.
@@ -43,6 +44,7 @@ Depois é só abrir `http://localhost:8080`. Também funciona abrindo o `index.h
 | Fases da obra 3D (textos) | lista `.hud__phases` no `index.html` |
 | Modelo 3D, cronograma e câmera | `js/building.js` |
 | Cenas do filme | `js/film.js` |
+| Narração | arquivos `assets/audio/vo-01.mp3` a `vo-08.mp3`; os horários de cada fala ficam em `Voice.setup([...])` no `js/film.js` |
 
 > Os dados atuais (nome "Vértice", telefone, CNPJ, projetos e números) são **fictícios**. Troque pelos dados reais da sua empresa antes de publicar.
 
@@ -56,7 +58,7 @@ js/building.js      cena 3D da obra (Three.js)
 js/film.js          o filme em motion + player + trilha sonora
 js/art.js           skylines e ilustrações procedurais
 vendor/             GSAP 3.15 e um build enxuto do three.js r186
-assets/             favicon e imagem de compartilhamento
+assets/             favicon, imagem de compartilhamento e narração (audio/)
 ```
 
 ## Créditos

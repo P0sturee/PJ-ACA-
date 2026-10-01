@@ -1139,6 +1139,41 @@ em { font-style: normal; color: var(--accent); }
   fill: var(--accent-ink);
 }
 
+.player__voice {
+  position: absolute;
+  right: 2.4cqw;
+  top: 5cqw;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 8px 10px;
+  border-radius: 999px;
+  background: rgba(11, 12, 14, 0.62);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line-strong);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: opacity 0.4s, transform 0.4s var(--ease), border-color 0.3s;
+}
+
+.player__voice svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.player__voice .spk { fill: var(--accent); }
+.player__voice:hover { border-color: var(--accent); }
+.player.has-sound .player__voice { opacity: 0; transform: translateY(8px); pointer-events: none; }
+
 .player.is-playing .player__big,
 .player.has-started .player__big { opacity: 0; pointer-events: none; transform: translate(-50%, -50%) scale(0.9); }
 
@@ -1193,6 +1228,8 @@ em { font-style: normal; color: var(--accent); }
 }
 
 .player__btn--text[aria-pressed='true'] { color: var(--accent); }
+.player__btn--text .sm { display: none; }
+@media (max-width: 640px) { .player__btn--text .sm { display: inline; } }
 
 .eq { display: flex; align-items: flex-end; gap: 2px; height: 12px; }
 .eq b { width: 2px; height: 3px; background: currentColor; }
@@ -1298,6 +1335,8 @@ em { font-style: normal; color: var(--accent); }
   .reel__txt--sub { font-size: 2.3cqw; }
   .reel__txt--big { font-size: 25cqw; }
   .reel__hud { font-size: 9px; padding: 14px; }
+  .player__voice { right: 12px; top: auto; bottom: 12px; font-size: 0.6rem; padding: 7px 12px 7px 8px; }
+  .player__btn--text .lg { display: none; }
   .player__btn[data-act='restart'] { display: none; }
   .player__time { font-size: 0.66rem; }
   .player__track:hover .player__chapters span::after { opacity: 0; }
