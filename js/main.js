@@ -658,7 +658,14 @@
     ]
       .filter(Boolean)
       .join('\n\n');
-    window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    // link real (em vez de window.open) para funcionar também em iframes e bloqueadores de pop-up
+    const link = document.createElement('a');
+    link.href = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(text)}`;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
     note.textContent = 'Abrimos o WhatsApp com a sua mensagem. Obrigado!';
   });
 
