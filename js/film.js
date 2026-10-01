@@ -70,6 +70,17 @@
     on: false,
     ensure() {
       if (this.ctx) return true;
+      if (this.failed) return false;
+      try {
+        return this.build();
+      } catch (e) {
+        // sem Web Audio a narração continua; só a trilha sintetizada some
+        this.ctx = null;
+        this.failed = true;
+        return false;
+      }
+    },
+    build() {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return false;
       const ctx = (this.ctx = new AC());
@@ -227,105 +238,78 @@
   };
 
   /* ==========================================================================
-     Narração (ElevenLabs, voz "Lucas"): um clipe por cena, tocado em
-     sincronia com a linha do tempo — inclusive ao arrastar, pausar ou pular
+     Narração (ElevenLabs, voz "Lucas"): uma faixa única com as falas já no
+     tempo certo, tocada por um <audio> comum e mantida em sincronia com a
+     linha do tempo (pausar, arrastar e recomeçar). O primeiro play acontece
+     dentro do clique, o que libera o som em qualquer navegador, inclusive
+     no iPhone e em navegadores dentro de apps.
   ========================================================================== */
-  const Voice = {
-    cues: [],
-    cur: null,
-    node: null,
-    done: null,
-    loading: null,
-    setup(list) {
-      // nenhuma fala começa antes da anterior terminar
-      let end = 0;
-      this.cues = list.map((c) => {
-        const start = Math.max(c.t, end + 0.12);
-        end = start + c.d;
-        return { url: c.src, d: c.d, start, buf: null, el: null };
+  const Narration = {
+    el: null,
+    ranges: [],
+    pending: false,
+    init(src, ranges) {
+      this.ranges = ranges;
+      const el = (this.el = new Audio());
+      el.preload = 'none';
+      el.setAttribute('playsinline', '');
+      el.src = src;
+      el.addEventListener('playing', () => (this.pending = false));
+    },
+    prefetch() {
+      if (this.el && this.el.preload !== 'auto') this.el.preload = 'auto';
+    },
+    seek(t) {
+      try {
+        this.el.currentTime = t;
+      } catch (e) {}
+    },
+    // precisa ser chamado dentro de um clique
+    start(t) {
+      const el = this.el;
+      this.seek(t);
+      this.pending = true;
+      const p = el.play();
+      return (p && p.then ? p : Promise.resolve()).catch((err) => {
+        this.pending = false;
+        throw err;
       });
     },
-    load() {
-      if (this.loading || !Sound.ctx) return this.loading || Promise.resolve();
-      const ctx = Sound.ctx;
-      this.gain = ctx.createGain();
-      this.gain.connect(Sound.master);
-      this.loading = Promise.all(
-        this.cues.map((c) =>
-          fetch(c.url)
-            .then((r) => {
-              if (!r.ok) throw new Error(r.status);
-              return r.arrayBuffer();
-            })
-            .then((b) => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej)))
-            .then((buf) => (c.buf = buf))
-            // sem fetch (ex.: abrindo o arquivo direto do disco): usa <audio>
-            .catch(() => {
-              c.el = new Audio(c.url);
-              c.el.preload = 'auto';
-            })
-        )
-      );
-      return this.loading;
-    },
-    position() {
-      const c = this.cur;
-      if (!c) return 0;
-      return c.el ? c.el.currentTime : Sound.ctx.currentTime - this.t0;
+    // só "destrava" o áudio (clique com o filme parado)
+    unlock() {
+      const el = this.el;
+      if (!el.paused) return;
+      el.muted = true;
+      const p = el.play();
+      const done = () => {
+        if (!this.pending) el.pause();
+        el.muted = false;
+      };
+      if (p && p.then) p.then(done, done);
+      else done();
     },
     stop() {
-      if (this.node) {
-        this.node.onended = null;
-        try {
-          this.node.stop();
-        } catch (e) {}
-        this.node.disconnect();
-        this.node = null;
-      }
-      if (this.cur && this.cur.el) this.cur.el.pause();
-      this.cur = null;
+      if (this.el && !this.el.paused) this.el.pause();
+      this.pending = false;
       Sound.duck(false);
     },
-    finished(cue) {
-      if (this.cur !== cue) return;
-      this.node = null;
-      this.cur = null;
-      this.done = cue;
-      Sound.duck(false);
+    speaking(t) {
+      return this.ranges.some(([a, b]) => t >= a && t < b);
     },
     sync(t, active) {
-      if (!active || !Sound.on || !Sound.ctx) {
-        if (this.cur) this.stop();
+      const el = this.el;
+      if (!el) return;
+      if (!active || !Sound.on) {
+        if (!el.paused) el.pause();
+        Sound.duck(false);
         return;
       }
-      const cue = this.cues.find((c) => (c.buf || c.el) && t >= c.start && t < c.start + c.d);
-      if (!cue || cue === this.done) {
-        if (this.cur && this.cur !== cue) this.stop();
-        return;
+      if (el.paused) {
+        if (!this.pending) this.start(t).catch(() => {});
+      } else if (Math.abs(el.currentTime - t) > 0.3) {
+        this.seek(t);
       }
-      const off = t - cue.start;
-      if (this.cur === cue && Math.abs(this.position() - off) < 0.3) return;
-      this.stop();
-      this.cur = cue;
-      Sound.duck(true);
-      if (cue.buf) {
-        const src = Sound.ctx.createBufferSource();
-        src.buffer = cue.buf;
-        src.connect(this.gain);
-        src.onended = () => this.finished(cue);
-        src.start(0, off);
-        this.node = src;
-        this.t0 = Sound.ctx.currentTime - off;
-      } else {
-        cue.el.currentTime = off;
-        cue.el.onended = () => this.finished(cue);
-        const p = cue.el.play();
-        if (p && p.catch) p.catch(() => {});
-      }
-    },
-    // depois de pular na linha do tempo, uma fala já ouvida pode tocar de novo
-    reset() {
-      this.done = null;
+      Sound.duck(this.speaking(t));
     },
   };
 
@@ -770,17 +754,19 @@
     textIn(tagline, B + 2.3);
     tl.to({}, { duration: 2.4 }, B + 2.7);
 
-    // falas do narrador: início desejado (s) e duração do clipe (s)
-    Voice.setup([
-      { t: 0.9, d: 1.85, src: 'assets/audio/vo-01.mp3' },
-      { t: 5.8, d: 5.12, src: 'assets/audio/vo-02.mp3' },
-      { t: 11.6, d: 5.22, src: 'assets/audio/vo-03.mp3' },
-      { t: 18.9, d: 2.27, src: 'assets/audio/vo-04.mp3' },
-      { t: N1 + 0.1, d: 2.06, src: 'assets/audio/vo-05.mp3' },
-      { t: N2 + 0.1, d: 2.48, src: 'assets/audio/vo-06.mp3' },
-      { t: N3 + 0.1, d: 2.14, src: 'assets/audio/vo-07.mp3' },
-      { t: B + 1.0, d: 2.48, src: 'assets/audio/vo-08.mp3' },
-    ]);
+    // narração: faixa única (assets/audio/narracao.mp3) com cada fala neste
+    // início (s) e duração (s); usado para abaixar a trilha enquanto ele fala
+    const LINES = [
+      [0.9, 1.81], // Tudo começa… com um traço.
+      [5.8, 5.07], // Depois, a precisão…
+      [11.6, 5.2], // Então, o concreto…
+      [18.9, 2.23], // E a cidade ganha um novo endereço.
+      [N1 + 0.1, 2.02], // Mais de trezentas obras entregues.
+      [N2 + 0.1, 2.46], // Um vírgula oito milhão de metros quadrados.
+      [N3 + 0.1, 2.12], // Vinte e seis anos erguendo cidades.
+      [B + 1.0, 2.44], // Vértice. Engenharia que fica de pé.
+    ];
+    Narration.init('assets/audio/narracao.mp3', LINES.map(([a, d]) => [a, a + d]));
 
     const DURATION = tl.duration();
 
@@ -832,7 +818,7 @@
         if (playing && !scrubbing) gsap.to(chapterEl, { duration: 0.6, scrambleText: { text: label, chars: 'upperCase', speed: 0.6 } });
         else chapterEl.textContent = label;
       }
-      Voice.sync(t, playing && !scrubbing);
+      Narration.sync(t, playing && !scrubbing);
     }
 
     tl.eventCallback('onUpdate', updateUI);
@@ -847,15 +833,15 @@
       player.classList.toggle('is-playing', v);
       playBtn.setAttribute('aria-label', v ? 'Pausar' : 'Reproduzir');
       Sound.pad(v);
-      if (!v) Voice.stop();
+      if (!v) Narration.stop();
     }
 
     function play() {
-      if (tl.progress() >= 1) Voice.reset();
       if (tl.progress() >= 1) tl.restart();
       else tl.play();
       player.classList.add('has-started');
       setPlaying(true);
+      if (Sound.on) Narration.start(tl.time()).catch(() => {});
     }
 
     function pause() {
@@ -882,30 +868,42 @@
     screen.addEventListener('click', toggle);
     restartBtn.addEventListener('click', () => {
       userPaused = false;
-      Voice.reset();
       tl.restart();
       player.classList.add('has-started');
       setPlaying(true);
+      if (Sound.on) Narration.start(0).catch(() => {});
     });
 
+    const voiceLabel = voiceBtn.querySelector('span');
+    function soundFailed() {
+      // o navegador recusou o áudio: volta o botão para tentar de novo
+      soundBtn.setAttribute('aria-pressed', 'false');
+      player.classList.remove('has-sound');
+      Sound.setOn(false);
+      voiceLabel.textContent = 'Toque de novo para ouvir';
+    }
     function setSound(on) {
       soundBtn.setAttribute('aria-pressed', String(on));
       player.classList.toggle('has-sound', on);
       Sound.setOn(on);
       Sound.pad(playing);
-      if (on) Voice.load().then(updateUI);
-      else Voice.stop();
+      if (!on) return Narration.stop();
+      if (playing) Narration.start(tl.time()).catch(soundFailed);
+      else Narration.unlock();
     }
     soundBtn.addEventListener('click', () => setSound(soundBtn.getAttribute('aria-pressed') !== 'true'));
     // "Assistir com narração": liga o som e recomeça do início para ouvir tudo
     voiceBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      setSound(true);
       userPaused = false;
-      Voice.reset();
+      soundBtn.setAttribute('aria-pressed', 'true');
+      player.classList.add('has-sound', 'has-started');
+      Sound.on = true;
       tl.restart();
-      player.classList.add('has-started');
       setPlaying(true);
+      Narration.start(0).catch(soundFailed);
+      Sound.setOn(true);
+      Sound.pad(true);
     });
 
     fsBtn.addEventListener('click', () => {
@@ -926,7 +924,6 @@
     const seekFromEvent = (e) => {
       const rct = track.getBoundingClientRect();
       const p = Math.min(1, Math.max(0, (e.clientX - rct.left) / rct.width));
-      Voice.reset();
       tl.progress(p);
       updateUI();
     };
@@ -957,7 +954,6 @@
         toggle();
       } else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
         e.preventDefault();
-        Voice.reset();
         tl.time(Math.min(DURATION, Math.max(0, tl.time() + (e.key === 'ArrowRight' ? 5 : -5))));
         updateUI();
       }
@@ -972,6 +968,7 @@
       // chamado quando o player entra/sai da tela
       autoplay(inView) {
         if (inView) {
+          Narration.prefetch();
           if (!userPaused && !playing && tl.progress() < 1) play();
         } else if (playing) {
           pause();

@@ -44,7 +44,7 @@ Depois é só abrir `http://localhost:8080`. Também funciona abrindo o `index.h
 | Fases da obra 3D (textos) | lista `.hud__phases` no `index.html` |
 | Modelo 3D, cronograma e câmera | `js/building.js` |
 | Cenas do filme | `js/film.js` |
-| Narração | arquivos `assets/audio/vo-01.mp3` a `vo-08.mp3`; os horários de cada fala ficam em `Voice.setup([...])` no `js/film.js` |
+| Narração | `assets/audio/narracao.mp3` (faixa única com as 8 falas já no tempo certo); os horários de cada fala estão em `LINES` no `js/film.js` |
 
 > Os dados atuais (nome "Vértice", telefone, CNPJ, projetos e números) são **fictícios**. Troque pelos dados reais da sua empresa antes de publicar.
 
