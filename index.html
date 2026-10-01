@@ -1,85 +1,513 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PJ AÇAÍ</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Vértice — Engenharia &amp; Construção</title>
+  <meta name="description" content="Construtora com engenharia de precisão: obras residenciais, corporativas, industriais e de infraestrutura. Veja um edifício ser erguido em 360° enquanto você rola a página." />
+  <meta name="theme-color" content="#0b0c0e" />
+  <meta property="og:title" content="Vértice — Engenharia &amp; Construção" />
+  <meta property="og:description" content="Erguemos o que o amanhã vai habitar. Role a página e veja a obra subir em 360°." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="assets/og-image.jpg" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
+<body class="is-loading">
 
-<body>
-
-<header>PJ AÇAÍ</header>
-
-<main class="container">
-
-  <!-- AÇAÍ BATIDO 300 -->
-  <section class="produto">
-    <h2>Açaí Batido 300ml</h2>
-    <p class="preco">R$ 18,00</p>
-
-    <div class="qtd-control">
-      <button onclick="alterarQtd('300', -1)">−</button>
-      <span id="qtd-300">0</span>
-      <button onclick="alterarQtd('300', 1)">+</button>
+  <!-- ============ PRELOADER ============ -->
+  <div class="preloader" aria-hidden="true">
+    <div class="preloader__panel preloader__panel--top"></div>
+    <div class="preloader__panel preloader__panel--bottom"></div>
+    <div class="preloader__inner">
+      <svg class="preloader__draw" viewBox="0 0 120 160" fill="none">
+        <path d="M10 150 H110" />
+        <path d="M24 150 V58 H96 V150" />
+        <path d="M42 58 V20 H78 V58" />
+        <path d="M24 82 H96 M24 106 H96 M24 130 H96 M42 39 H78" />
+        <path d="M60 20 V6" />
+      </svg>
+      <div class="preloader__count"><span class="preloader__num">000</span><small>%</small></div>
+      <p class="preloader__label">Preparando o canteiro</p>
     </div>
+    <div class="preloader__bar"><i></i></div>
+  </div>
 
-    <div id="itens-300"></div>
-  </section>
+  <!-- ============ ELEMENTOS FIXOS ============ -->
+  <div class="cursor is-hidden" aria-hidden="true"><div class="cursor__ring"><span class="cursor__label"></span></div><div class="cursor__dot"></div></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"><i></i></div>
 
-  <!-- AÇAÍ BATIDO 500 -->
-  <section class="produto">
-    <h2>Açaí Batido 500ml</h2>
-    <p class="preco">R$ 22,00</p>
+  <header class="nav">
+    <a href="#inicio" class="nav__logo" aria-label="Vértice — início">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 7h9l6 18 6-18h9L24 35h-8z" fill="currentColor"/><rect x="30" y="1" width="6" height="6" fill="var(--accent)"/></svg>
+      <span>VÉRTICE<small>Engenharia &amp; Construção</small></span>
+    </a>
+    <nav class="nav__links" aria-label="Principal">
+      <a href="#obra">A obra</a>
+      <a href="#filme">O filme</a>
+      <a href="#servicos">Serviços</a>
+      <a href="#projetos">Projetos</a>
+      <a href="#processo">Método</a>
+    </nav>
+    <a href="#contato" class="btn btn--small btn--primary nav__cta magnetic"><span>Orçamento</span></a>
+    <button class="nav__burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
+  </header>
 
-    <div class="qtd-control">
-      <button onclick="alterarQtd('500', -1)">−</button>
-      <span id="qtd-500">0</span>
-      <button onclick="alterarQtd('500', 1)">+</button>
+  <div class="menu" id="menu" aria-hidden="true">
+    <div class="menu__bg"></div>
+    <nav class="menu__links" aria-label="Menu">
+      <a href="#obra"><small>01</small><span>A obra</span></a>
+      <a href="#filme"><small>02</small><span>O filme</span></a>
+      <a href="#servicos"><small>03</small><span>Serviços</span></a>
+      <a href="#projetos"><small>04</small><span>Projetos</span></a>
+      <a href="#processo"><small>05</small><span>Método</span></a>
+      <a href="#contato"><small>06</small><span>Contato</span></a>
+    </nav>
+    <div class="menu__foot">
+      <a class="js-phone" href="#">(41) 0000-0000</a>
+      <a class="js-email" href="#">contato@vertice.eng.br</a>
     </div>
+  </div>
 
-    <div id="itens-500"></div>
-  </section>
+  <!-- ============ CONTEÚDO ROLÁVEL ============ -->
+  <div id="smooth-wrapper">
+    <div id="smooth-content">
+      <main>
 
-  <!-- POTE 500 -->
-  <section class="produto">
-    <h2>Pote de Açaí 500ml</h2>
-    <p class="preco">R$ 25,00</p>
+        <!-- ============ HERO ============ -->
+        <section class="hero" id="inicio">
+          <div class="hero__bg" aria-hidden="true">
+            <div class="hero__grid" data-speed="0.55"></div>
+            <div class="hero__glow"></div>
+            <div class="hero__ghost" data-speed="0.7">VÉRTICE</div>
+            <svg class="skyline skyline--far" data-layer="far" data-speed="0.7" viewBox="0 0 1600 420" preserveAspectRatio="xMidYMax slice"></svg>
+            <svg class="skyline skyline--mid" data-layer="mid" data-speed="0.82" viewBox="0 0 1600 420" preserveAspectRatio="xMidYMax slice"></svg>
+            <svg class="hero__crane" data-speed="0.82" viewBox="0 0 520 620" fill="none">
+              <g class="hc__mast">
+                <path d="M300 620 V150 M330 620 V150" />
+                <path class="hc__lattice" d="" />
+              </g>
+              <g class="hc__top">
+                <path d="M300 150 L315 70 L330 150" />
+                <g class="hc__jib">
+                  <path d="M315 150 H20 M315 128 H40 M20 150 L40 128" />
+                  <path class="hc__jib-lattice" d="" />
+                  <path d="M315 70 L120 128 M315 70 L230 128" class="hc__ties" />
+                  <path d="M330 150 H470 M330 136 H470 M315 70 L470 136" />
+                  <rect x="430" y="150" width="40" height="34" class="hc__weight" />
+                  <g class="hc__trolley">
+                    <rect x="-12" y="150" width="24" height="8" />
+                    <path class="hc__cable" d="M0 158 V320" />
+                    <g class="hc__hook"><rect x="-7" y="320" width="14" height="14" /><path d="M-40 360 L0 334 L40 360 M-60 360 H60 V372 H-60 Z" /></g>
+                  </g>
+                </g>
+              </g>
+            </svg>
+            <svg class="skyline skyline--near" data-layer="near" data-speed="0.95" viewBox="0 0 1600 420" preserveAspectRatio="xMidYMax slice"></svg>
+          </div>
 
-    <div class="qtd-control">
-      <button onclick="alterarQtd('pote', -1)">−</button>
-      <span id="qtd-pote">0</span>
-      <button onclick="alterarQtd('pote', 1)">+</button>
+          <div class="hero__content">
+            <p class="eyebrow hero__eyebrow"><span class="eyebrow__dot"></span>Engenharia &amp; Construção · desde 1998</p>
+            <h1 class="hero__title">
+              <span class="line"><span class="line__in">Erguemos</span></span>
+              <span class="line"><span class="line__in">o que o <em>amanhã</em></span></span>
+              <span class="line"><span class="line__in">vai habitar.</span></span>
+            </h1>
+            <div class="hero__row">
+              <p class="hero__lead">Da fundação à entrega das chaves, executamos obras residenciais, corporativas e industriais com precisão de engenharia e prazo cumprido.</p>
+              <div class="hero__actions">
+                <a href="#obra" class="btn btn--primary magnetic"><span>Ver a obra subir</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16m0 0l-6-6m6 6l6-6"/></svg></a>
+                <a href="#contato" class="btn btn--ghost magnetic"><span>Solicitar orçamento</span></a>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero__meta" aria-hidden="true">
+            <span>25°25′S · 49°16′W</span>
+            <span>Curitiba · PR</span>
+          </div>
+          <div class="hero__scroll" aria-hidden="true"><span>Role para construir</span><i></i></div>
+        </section>
+
+        <!-- ============ OBRA 3D 360° ============ -->
+        <section class="build" id="obra" aria-label="Um edifício sendo construído em 360 graus">
+          <div class="build__stage">
+            <div class="build__sky" aria-hidden="true"><i class="build__sky-day"></i><i class="build__sky-dusk"></i><i class="build__stars"></i></div>
+            <canvas class="build__canvas" aria-hidden="true"></canvas>
+            <div class="build__fallback">
+              <p>Seu navegador não suporta WebGL — mas a obra continua de pé. 🏗️</p>
+            </div>
+
+            <div class="hud">
+              <div class="hud__corner hud__corner--tl"></div><div class="hud__corner hud__corner--tr"></div>
+              <div class="hud__corner hud__corner--bl"></div><div class="hud__corner hud__corner--br"></div>
+
+              <div class="hud__head">
+                <p class="hud__tag"><span class="hud__rec"></span>Canteiro 01 · Torre Aurora · ao vivo</p>
+                <dl class="hud__telemetry">
+                  <div><dt>Rotação</dt><dd data-t="rot">000°</dd></div>
+                  <div><dt>Pavimentos</dt><dd data-t="floors">00/14</dd></div>
+                  <div><dt>Dia de obra</dt><dd data-t="day">000</dd></div>
+                  <div class="hud__hide-sm"><dt>Concreto</dt><dd data-t="conc">0 m³</dd></div>
+                </dl>
+              </div>
+
+              <ol class="hud__phases">
+                <li data-from="0" data-to="0.14">
+                  <span class="hud__num">01 / 06</span>
+                  <h3>Fundação</h3>
+                  <p>Sondagem, terraplanagem e blocos sobre estacas. Tudo começa pelo que ninguém vê — e é isso que sustenta todo o resto.</p>
+                </li>
+                <li data-from="0.14" data-to="0.4">
+                  <span class="hud__num">02 / 06</span>
+                  <h3>Estrutura</h3>
+                  <p>Núcleo rígido, pilares e lajes em concreto armado. Um pavimento a cada ciclo, com controle tecnológico de cada caminhão.</p>
+                </li>
+                <li data-from="0.4" data-to="0.62">
+                  <span class="hud__num">03 / 06</span>
+                  <h3>Fechamento</h3>
+                  <p>Pele de vidro com controle solar e montantes em alumínio. A fachada sobe logo atrás da estrutura — sem tempo perdido.</p>
+                </li>
+                <li data-from="0.62" data-to="0.8">
+                  <span class="hud__num">04 / 06</span>
+                  <h3>Coroamento</h3>
+                  <p>Brises em madeira engenheirada, pergolado e casa de máquinas. O desenho do arquiteto, agora em escala real.</p>
+                </li>
+                <li data-from="0.8" data-to="0.9">
+                  <span class="hud__num">05 / 06</span>
+                  <h3>Paisagismo</h3>
+                  <p>Canteiro desmontado, terraço-jardim com piscina e calçadas acabadas. A obra devolve verde para a cidade.</p>
+                </li>
+                <li data-from="0.9" data-to="1.01">
+                  <span class="hud__num">06 / 06</span>
+                  <h3>Entrega</h3>
+                  <p>Luzes acesas, vistorias concluídas, chaves na mão. 730 dias depois, a cidade ganha um novo endereço.</p>
+                </li>
+              </ol>
+
+              <div class="hud__dial" aria-hidden="true">
+                <svg viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="52" class="dial__track" />
+                  <circle cx="60" cy="60" r="52" class="dial__fill" pathLength="1" />
+                  <g class="dial__ticks"></g>
+                  <g class="dial__needle"><path d="M60 60 L60 14" /><circle cx="60" cy="60" r="3.5" /></g>
+                </svg>
+                <span class="dial__label"><b data-t="rot2">0</b>°<small>de 360°</small></span>
+              </div>
+
+              <div class="hud__foot">
+                <div class="hud__progress">
+                  <div class="hud__bar"><i class="hud__fill"></i></div>
+                  <ul class="hud__ticks">
+                    <li style="--at:0">Fundação</li>
+                    <li style="--at:0.14">Estrutura</li>
+                    <li style="--at:0.4">Fechamento</li>
+                    <li style="--at:0.62">Coroamento</li>
+                    <li style="--at:0.8">Paisagismo</li>
+                    <li style="--at:0.9">Entrega</li>
+                  </ul>
+                </div>
+                <p class="hud__pct"><b data-t="pct">0</b><small>%</small></p>
+              </div>
+
+              <p class="hud__hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4"/></svg>Arraste para girar</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ FILME MOTION ============ -->
+        <section class="film" id="filme">
+          <div class="section-head">
+            <p class="label">02 — O filme</p>
+            <h2 class="title split-lines">Do traço ao <em>skyline</em>.</h2>
+            <p class="section-head__lead">Um curta em motion design renderizado ao vivo no seu navegador — nenhum arquivo de vídeo, só código.</p>
+          </div>
+
+          <div class="player" tabindex="0" aria-label="Filme Vértice — do traço ao skyline">
+            <div class="player__screen">
+              <svg class="reel" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+              <div class="reel__type" aria-hidden="true"></div>
+              <div class="reel__hud" aria-hidden="true">
+                <span class="reel__chapter">CENA 01 — O TRAÇO</span>
+                <span class="reel__tc"><i></i>TC 00:00:00:00</span>
+              </div>
+              <button class="player__voice" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9.5v5h3.5L12 18V6L7.5 9.5z"/><path d="M15.5 9.2a4 4 0 0 1 0 5.6M18.3 6.6a7.8 7.8 0 0 1 0 10.8"/></svg>
+                <span>Assistir com narração</span>
+              </button>
+              <button class="player__big" type="button" aria-label="Reproduzir filme">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <span>Assistir · 0:36</span>
+              </button>
+            </div>
+            <div class="player__bar">
+              <button class="player__btn" data-act="play" type="button" aria-label="Reproduzir">
+                <svg class="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <svg class="i-pause" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+              </button>
+              <span class="player__time"><b class="player__cur">0:00</b> / <span class="player__dur">0:36</span></span>
+              <div class="player__track" role="slider" tabindex="0" aria-label="Linha do tempo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div class="player__rail"><i class="player__fill"></i></div>
+                <div class="player__chapters"></div>
+                <i class="player__thumb"></i>
+              </div>
+              <button class="player__btn player__btn--text" data-act="sound" type="button" aria-pressed="false" aria-label="Som e narração"><span class="lg">Som e voz</span><span class="sm">Som</span><i class="eq"><b></b><b></b><b></b></i></button>
+              <button class="player__btn" data-act="restart" type="button" aria-label="Recomeçar"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5"/></svg></button>
+              <button class="player__btn" data-act="fs" type="button" aria-label="Tela cheia"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ SOBRE / MANIFESTO ============ -->
+        <section class="about" id="sobre">
+          <p class="label">03 — Quem somos</p>
+          <p class="about__text">Há 26 anos transformamos terrenos vazios em <em>endereços</em>. Somos engenheiros, mestres de obra e projetistas obcecados por um único detalhe: entregar exatamente o que foi prometido — no prazo, no orçamento e com <em>segurança</em> em cada etapa.</p>
+          <div class="stats">
+            <div class="stat"><span class="stat__num" data-count="320" data-suffix="+">0</span><span class="stat__label">obras entregues</span></div>
+            <div class="stat"><span class="stat__num" data-count="1.8" data-decimals="1" data-suffix=" mi">0</span><span class="stat__label">m² construídos</span></div>
+            <div class="stat"><span class="stat__num" data-count="98" data-suffix="%">0</span><span class="stat__label">das entregas no prazo</span></div>
+            <div class="stat"><span class="stat__num" data-count="1400" data-suffix="+">0</span><span class="stat__label">profissionais em campo</span></div>
+          </div>
+        </section>
+
+        <!-- ============ SERVIÇOS (scroll horizontal) ============ -->
+        <section class="services" id="servicos">
+          <div class="services__pin">
+            <div class="services__head">
+              <p class="label">04 — O que fazemos</p>
+              <h2 class="title">Cinco frentes.<br />Um só <em>padrão</em>.</h2>
+              <p class="services__hint">Continue rolando <span>→</span></p>
+            </div>
+            <div class="services__track">
+              <article class="svc">
+                <span class="svc__num">01</span>
+                <svg class="svc__art" viewBox="0 0 240 180" fill="none">
+                  <path d="M20 170H220" /><path d="M60 170V40H140V170" /><path d="M140 170V80H190V170" />
+                  <path d="M60 60H140M60 80H140M60 100H140M60 120H140M60 140H140" /><path d="M140 100H190M140 120H190M140 140H190" />
+                  <path d="M100 40V20M80 170V150H120V170" />
+                </svg>
+                <h3>Residencial</h3>
+                <p>Edifícios e condomínios de alto padrão com acabamento impecável, gestão de personalização e pós-obra dedicado.</p>
+                <ul class="svc__tags"><li>Alto padrão</li><li>Multifamiliar</li><li>Condomínios</li></ul>
+              </article>
+              <article class="svc">
+                <span class="svc__num">02</span>
+                <svg class="svc__art" viewBox="0 0 240 180" fill="none">
+                  <path d="M20 170H220" /><path d="M50 170V30H105V170" /><path d="M135 170V60H190V170" /><path d="M105 90H135M105 100H135" />
+                  <path d="M65 30V170M80 30V170M95 30V170" /><path d="M150 60V170M165 60V170M180 60V170" /><path d="M77 30V12" />
+                </svg>
+                <h3>Corporativo</h3>
+                <p>Sedes, lajes corporativas e centros comerciais com foco em eficiência energética e certificações ambientais.</p>
+                <ul class="svc__tags"><li>Escritórios</li><li>Varejo</li><li>LEED</li></ul>
+              </article>
+              <article class="svc">
+                <span class="svc__num">03</span>
+                <svg class="svc__art" viewBox="0 0 240 180" fill="none">
+                  <path d="M10 170H230" /><path d="M20 170V90L60 60V90L100 60V90L140 60V90L180 60V90L220 60V170" />
+                  <path d="M40 170V130H80V170M110 170V130H150V170" /><path d="M170 120H200V140H170Z" /><path d="M20 110H220" />
+                </svg>
+                <h3>Industrial</h3>
+                <p>Galpões logísticos e plantas industriais em pré-moldado e estrutura metálica, com cronogramas agressivos.</p>
+                <ul class="svc__tags"><li>Logística</li><li>Pré-moldado</li><li>Estrutura metálica</li></ul>
+              </article>
+              <article class="svc">
+                <span class="svc__num">04</span>
+                <svg class="svc__art" viewBox="0 0 240 180" fill="none">
+                  <path d="M10 110H230" /><path d="M10 118H230" /><path d="M30 118Q120 20 210 118" />
+                  <path d="M60 118V75M90 118V54M120 118V48M150 118V54M180 118V75" /><path d="M50 118V170M190 118V170" /><path d="M10 160Q60 150 120 162T230 158" />
+                </svg>
+                <h3>Infraestrutura</h3>
+                <p>Obras de arte especiais, pavimentação e saneamento com frota própria de equipamentos pesados.</p>
+                <ul class="svc__tags"><li>Pontes</li><li>Saneamento</li><li>Viário</li></ul>
+              </article>
+              <article class="svc">
+                <span class="svc__num">05</span>
+                <svg class="svc__art" viewBox="0 0 240 180" fill="none">
+                  <path d="M20 170H220" /><path d="M70 170V40H170V170" /><path d="M70 40L120 18L170 40" />
+                  <path d="M90 70H110V95H90ZM130 70H150V95H130ZM90 115H110V140H90ZM130 115H150V140H130Z" />
+                  <path d="M50 170V30M190 170V30M50 60H190M50 100H190M50 140H190M50 60L70 100M190 60L170 100" />
+                </svg>
+                <h3>Retrofit</h3>
+                <p>Modernização de edifícios existentes: reforço estrutural, nova fachada e atualização completa de sistemas prediais.</p>
+                <ul class="svc__tags"><li>Reforço</li><li>Fachadas</li><li>Restauro</li></ul>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ PROJETOS ============ -->
+        <section class="projects" id="projetos">
+          <div class="section-head section-head--split">
+            <div>
+              <p class="label">05 — Obras</p>
+              <h2 class="title split-lines">Projetos que já<br />estão <em>de pé</em>.</h2>
+            </div>
+            <p class="section-head__lead">Uma seleção recente do nosso portfólio. Cada obra, um compromisso cumprido com quem vai ocupá-la.</p>
+          </div>
+          <div class="projects__grid">
+            <div class="projects__col">
+              <a class="proj" href="#contato" data-cursor="Ver obra">
+                <div class="proj__media"><div class="proj__img" data-art="tower"></div><span class="proj__tag">Residencial</span></div>
+                <div class="proj__info"><h3>Torre Aurora</h3><p>Curitiba · PR</p><p>2024 · 32.400 m²</p></div>
+              </a>
+              <a class="proj" href="#contato" data-cursor="Ver obra">
+                <div class="proj__media"><div class="proj__img" data-art="warehouse"></div><span class="proj__tag">Industrial</span></div>
+                <div class="proj__info"><h3>Parque Logístico Serra</h3><p>Araucária · PR</p><p>2023 · 58.000 m²</p></div>
+              </a>
+            </div>
+            <div class="projects__col projects__col--offset">
+              <a class="proj" href="#contato" data-cursor="Ver obra">
+                <div class="proj__media"><div class="proj__img" data-art="twins"></div><span class="proj__tag">Corporativo</span></div>
+                <div class="proj__info"><h3>Sede Nexo</h3><p>São José dos Pinhais · PR</p><p>2024 · 21.700 m²</p></div>
+              </a>
+              <a class="proj" href="#contato" data-cursor="Ver obra">
+                <div class="proj__media"><div class="proj__img" data-art="terraces"></div><span class="proj__tag">Residencial</span></div>
+                <div class="proj__info"><h3>Residencial Alameda</h3><p>Joinville · SC</p><p>2022 · 14.900 m²</p></div>
+              </a>
+            </div>
+            <div class="projects__col">
+              <a class="proj" href="#contato" data-cursor="Ver obra">
+                <div class="proj__media"><div class="proj__img" data-art="bridge"></div><span class="proj__tag">Infraestrutura</span></div>
+                <div class="proj__info"><h3>Viaduto Rio Verde</h3><p>Ponta Grossa · PR</p><p>2021 · 420 m de vão</p></div>
+              </a>
+              <a class="proj" href="#contato" data-cursor="Ver obra">
+                <div class="proj__media"><div class="proj__img" data-art="retrofit"></div><span class="proj__tag">Retrofit</span></div>
+                <div class="proj__info"><h3>Edifício 1932</h3><p>Curitiba · PR</p><p>2023 · 6.800 m²</p></div>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ PROCESSO ============ -->
+        <section class="process" id="processo">
+          <div class="section-head">
+            <p class="label">06 — Método</p>
+            <h2 class="title split-lines">Cinco etapas.<br />Zero <em>surpresas</em>.</h2>
+          </div>
+          <div class="process__list">
+            <div class="process__line" aria-hidden="true"><i></i></div>
+            <article class="step">
+              <span class="step__dot" aria-hidden="true"></span>
+              <span class="step__num">01</span>
+              <div><h3>Diagnóstico</h3><p>Visita técnica, sondagem e estudo de viabilidade entregues em até 10 dias úteis.</p></div>
+            </article>
+            <article class="step">
+              <span class="step__dot" aria-hidden="true"></span>
+              <span class="step__num">02</span>
+              <div><h3>Projeto &amp; BIM</h3><p>Todas as disciplinas compatibilizadas em um modelo 3D antes do primeiro tijolo.</p></div>
+            </article>
+            <article class="step">
+              <span class="step__dot" aria-hidden="true"></span>
+              <span class="step__num">03</span>
+              <div><h3>Planejamento</h3><p>Cronograma físico-financeiro, linha de balanço e orçamento fechado — sem aditivos-surpresa.</p></div>
+            </article>
+            <article class="step">
+              <span class="step__dot" aria-hidden="true"></span>
+              <span class="step__num">04</span>
+              <div><h3>Execução</h3><p>Engenheiro residente, relatórios semanais com fotos e acompanhamento online da obra.</p></div>
+            </article>
+            <article class="step">
+              <span class="step__dot" aria-hidden="true"></span>
+              <span class="step__num">05</span>
+              <div><h3>Entrega &amp; pós-obra</h3><p>Vistoria com checklist, manual do proprietário e assistência técnica por 5 anos.</p></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ============ MARQUEE ============ -->
+        <section class="marquee" aria-hidden="true">
+          <div class="marquee__row" data-dir="1">
+            <div class="marquee__inner"><span>Segurança</span><i></i><span>Prazo</span><i></i><span>Precisão</span><i></i><span>Qualidade</span><i></i></div>
+          </div>
+          <div class="marquee__row marquee__row--outline" data-dir="-1">
+            <div class="marquee__inner"><span>Concreto</span><i></i><span>Aço</span><i></i><span>Vidro</span><i></i><span>Pessoas</span><i></i></div>
+          </div>
+        </section>
+
+        <!-- ============ CONTATO ============ -->
+        <section class="contact" id="contato">
+          <div class="contact__intro">
+            <p class="label">07 — Contato</p>
+            <h2 class="title split-lines">Vamos tirar o seu projeto do <em>papel</em>?</h2>
+            <p class="section-head__lead">Conte o que você precisa construir. Respondemos em até 24 horas úteis com os próximos passos.</p>
+            <ul class="contact__info">
+              <li><small>Telefone</small><a class="js-phone" href="#">(41) 0000-0000</a></li>
+              <li><small>E-mail</small><a class="js-email" href="#">contato@vertice.eng.br</a></li>
+              <li><small>Escritório</small><span>Curitiba · Paraná</span></li>
+              <li><small>Atendimento</small><span>Seg a sex · 8h às 18h</span></li>
+            </ul>
+          </div>
+
+          <form class="form" novalidate>
+            <div class="field">
+              <input id="f-nome" name="nome" type="text" autocomplete="name" required placeholder=" " />
+              <label for="f-nome">Seu nome</label>
+            </div>
+            <div class="field">
+              <input id="f-tel" name="telefone" type="tel" autocomplete="tel" inputmode="tel" required placeholder=" " />
+              <label for="f-tel">WhatsApp</label>
+            </div>
+            <fieldset class="chips">
+              <legend>Tipo de obra</legend>
+              <label><input type="radio" name="tipo" value="Residencial" checked /><span>Residencial</span></label>
+              <label><input type="radio" name="tipo" value="Corporativo" /><span>Corporativo</span></label>
+              <label><input type="radio" name="tipo" value="Industrial" /><span>Industrial</span></label>
+              <label><input type="radio" name="tipo" value="Infraestrutura" /><span>Infraestrutura</span></label>
+              <label><input type="radio" name="tipo" value="Retrofit" /><span>Retrofit</span></label>
+            </fieldset>
+            <div class="range">
+              <label for="f-area">Área estimada <output id="f-area-out">1.200 m²</output></label>
+              <input id="f-area" name="area" type="range" min="100" max="30000" step="100" value="1200" />
+              <div class="range__scale" aria-hidden="true"><span>100 m²</span><span>30.000 m²</span></div>
+            </div>
+            <div class="field">
+              <textarea id="f-msg" name="mensagem" rows="3" placeholder=" "></textarea>
+              <label for="f-msg">Conte um pouco sobre o projeto</label>
+            </div>
+            <button class="btn btn--primary btn--block magnetic" type="submit"><span>Enviar pelo WhatsApp</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m0 0l-6-6m6 6l-6 6"/></svg></button>
+            <p class="form__note" role="status">Ao enviar, abrimos o WhatsApp com a sua mensagem pronta.</p>
+          </form>
+        </section>
+      </main>
+
+      <!-- ============ RODAPÉ ============ -->
+      <footer class="footer">
+        <div class="footer__top">
+          <p class="footer__claim">Engenharia que<br />fica de pé.</p>
+          <nav class="footer__col" aria-label="Rodapé">
+            <small>Navegação</small>
+            <a href="#obra">A obra</a><a href="#filme">O filme</a><a href="#servicos">Serviços</a><a href="#projetos">Projetos</a><a href="#contato">Contato</a>
+          </nav>
+          <div class="footer__col">
+            <small>Redes</small>
+            <a href="#" rel="noopener">Instagram</a><a href="#" rel="noopener">LinkedIn</a><a href="#" rel="noopener">YouTube</a>
+          </div>
+          <button class="footer__top-btn magnetic" type="button" aria-label="Voltar ao topo"><svg viewBox="0 0 24 24"><path d="M12 20V4m0 0l-6 6m6-6l6 6"/></svg></button>
+        </div>
+        <div class="footer__brand" aria-hidden="true"><span>V</span><span>É</span><span>R</span><span>T</span><span>I</span><span>C</span><span>E</span></div>
+        <div class="footer__bottom">
+          <span>© <span class="js-year">2026</span> Vértice Engenharia &amp; Construção</span>
+          <span>CREA-PR 00.000 · CNPJ 00.000.000/0001-00</span>
+        </div>
+      </footer>
     </div>
+  </div>
 
-    <div id="itens-pote"></div>
-  </section>
-
-  <h3>Endereço de entrega</h3>
-  <input id="endereco" placeholder="Rua, número, bairro">
-
-  <h3>Forma de pagamento</h3>
-  <select id="pagamento">
-    <option>Pix</option>
-  </select>
-
-  <button class="finalizar" onclick="finalizarPedido()">Finalizar Pedido</button>
-
-</main>
-
-<footer>
-  <h4>Perguntas Frequentes</h4>
-
-  <p><strong>Como é feito o açaí?</strong><br>
-  Nosso açaí é batido na hora, bem cremoso e gelado.</p>
-
-  <p><strong>O frete está incluso?</strong><br>
-  Não. O valor do frete será informado no WhatsApp.</p>
-
-  <p><strong>Forma de pagamento?</strong><br>
-  Apenas Pix.</p>
-</footer>
-
-<script src="script.js"></script>
+  <script src="vendor/gsap/gsap.min.js"></script>
+  <script src="vendor/gsap/ScrollTrigger.min.js"></script>
+  <script src="vendor/gsap/ScrollSmoother.min.js"></script>
+  <script src="vendor/gsap/SplitText.min.js"></script>
+  <script src="vendor/gsap/DrawSVGPlugin.min.js"></script>
+  <script src="vendor/gsap/ScrambleTextPlugin.min.js"></script>
+  <script src="vendor/gsap/MotionPathPlugin.min.js"></script>
+  <script src="vendor/three.min.js"></script>
+  <script src="js/building.js"></script>
+  <script src="js/film.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
