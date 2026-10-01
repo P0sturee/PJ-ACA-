@@ -1154,9 +1154,10 @@ em { font-style: normal; color: var(--accent); }
   backdrop-filter: blur(10px);
   border: 1px solid var(--line-strong);
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: 0.76rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: var(--text);
   transition: opacity 0.4s, transform 0.4s var(--ease), border-color 0.3s;
 }
 
@@ -1171,6 +1172,23 @@ em { font-style: normal; color: var(--accent); }
 }
 
 .player__voice .spk { fill: var(--accent); }
+
+.player__voice::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid var(--accent);
+  animation: voicePulse 2.2s var(--ease) infinite;
+  pointer-events: none;
+}
+
+@keyframes voicePulse {
+  0% { opacity: 0.9; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(1.18, 1.5); }
+}
+
+@media (prefers-reduced-motion: reduce) { .player__voice::before { animation: none; opacity: 0; } }
 .player__voice:hover { border-color: var(--accent); }
 .player.has-sound .player__voice { opacity: 0; transform: translateY(8px); pointer-events: none; }
 

@@ -36,6 +36,30 @@
     return m + ':' + String(s).padStart(2, '0');
   };
 
+  // WAV silencioso em loop: no iOS coloca a página na categoria "mídia",
+  // que toca mesmo com o botão de silencioso ligado
+  function silentWav() {
+    const n = 800;
+    const buf = new ArrayBuffer(44 + n);
+    const v = new DataView(buf);
+    const w = (o, str) => str.split('').forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+    w(0, 'RIFF');
+    v.setUint32(4, 36 + n, true);
+    w(8, 'WAVE');
+    w(12, 'fmt ');
+    v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true);
+    v.setUint16(22, 1, true);
+    v.setUint32(24, 8000, true);
+    v.setUint32(28, 8000, true);
+    v.setUint16(32, 1, true);
+    v.setUint16(34, 8, true);
+    w(36, 'data');
+    v.setUint32(40, n, true);
+    for (let i = 0; i < n; i++) v.setUint8(44 + i, 128);
+    return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+  }
+
   /* ==========================================================================
      Trilha sonora sintetizada (WebAudio) — desligada por padrão
      ========================================================================== */
@@ -89,9 +113,24 @@
     },
     setOn(v) {
       this.on = v;
+      if (v) {
+        // iPhone: sem isto o botão de silencioso corta todo o áudio do site
+        try {
+          if (navigator.audioSession) navigator.audioSession.type = 'playback';
+        } catch (e) {}
+        if (!this.keepAlive) {
+          this.keepAlive = new Audio(silentWav());
+          this.keepAlive.loop = true;
+          this.keepAlive.setAttribute('playsinline', '');
+        }
+        const k = this.keepAlive.play();
+        if (k && k.catch) k.catch(() => {});
+      } else if (this.keepAlive) {
+        this.keepAlive.pause();
+      }
       if (v && !this.ensure()) return;
       if (!this.ctx) return;
-      if (v && this.ctx.state === 'suspended') this.ctx.resume();
+      if (v && this.ctx.state !== 'running') this.ctx.resume();
     },
     pad(playing) {
       this.playing = playing;
